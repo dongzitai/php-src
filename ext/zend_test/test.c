@@ -25,6 +25,11 @@
 #include "ext/standard/info.h"
 #include "php_test.h"
 
+#ifdef HAVE_LIBXML
+# include <libxml/globals.h>
+# include <libxml/parser.h>
+#endif
+
 static zend_class_entry *zend_test_interface;
 static zend_class_entry *zend_test_class;
 static zend_class_entry *zend_test_child_class;
@@ -47,6 +52,11 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO_EX(arginfo_zend_leak_variable, 0, 0, 1)
 	ZEND_ARG_INFO(0, variable)
 ZEND_END_ARG_INFO()
+
+#if defined(HAVE_LIBXML)
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_zend_test_override_libxml_global_state, 0, 0, IS_VOID, 0)
+ZEND_END_ARG_INFO()
+#endif
 
 ZEND_FUNCTION(zend_test_func)
 {
@@ -134,6 +144,19 @@ ZEND_FUNCTION(zend_leak_variable)
 	Z_ADDREF_P(zv);
 }
 /* }}} */
+
+
+ZEND_FUNCTION(zend_test_override_libxml_global_state)
+{
+	ZEND_PARSE_PARAMETERS_NONE();
+
+	xmlLoadExtDtdDefaultValue = 1;
+	xmlDoValidityCheckingDefaultValue = 1;
+	(void) xmlPedanticParserDefault(1);
+	(void) xmlSubstituteEntitiesDefault(1);
+	(void) xmlLineNumbersDefault(1);
+	(void) xmlKeepBlanksDefault(0);
+}
 
 static zend_object *zend_test_class_new(zend_class_entry *class_type) /* {{{ */ {
 	zend_object *obj = zend_objects_new(class_type);
@@ -297,6 +320,9 @@ static const zend_function_entry zend_test_functions[] = {
 	ZEND_FE(zend_terminate_string, arginfo_zend_terminate_string)
 	ZEND_FE(zend_leak_bytes, NULL)
 	ZEND_FE(zend_leak_variable, arginfo_zend_leak_variable)
+  #if defined(HAVE_LIBXML)
+	ZEND_FE(zend_test_override_libxml_global_state, arginfo_zend_test_override_libxml_global_state)
+  #endif
 	ZEND_FE_END
 };
 

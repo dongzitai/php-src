@@ -1458,6 +1458,7 @@ static xmlDocPtr dom_document_parser(zval *id, int mode, char *source, size_t so
 		options |= XML_PARSE_NOBLANKS;
 	}
 
+  php_libxml_sanitize_parse_ctxt_options(ctxt);
 	xmlCtxtUseOptions(ctxt, options);
 
 	ctxt->recovery = recover;
